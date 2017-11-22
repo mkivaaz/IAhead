@@ -49,6 +49,16 @@
             android:layout_height="wrap_content"
             android:src="@drawable/ic_arrow_right_white_64dp"/>
 
+
     </LinearLayout>
+
+    <Button
+        android:id="@+id/btn_decib"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Check Decibel"
+        android:layout_margin="@dimen/base_margin"
+        style="@style/TextAppearance.AppCompat.Headline"/>
+
 
 </LinearLayout>
