@@ -77,20 +77,20 @@ public class MainActivity extends AppCompatActivity {
 
     private void playSound(SoundDirection sd, double frequency, int duration) {
         // AudioTrack definition
-        int mBufferSize = AudioTrack.getMinBufferSize(SAMPLE_RATE,
+        int mBufferSize = AudioTrack.getMinBufferSize(44100,
                 AudioFormat.CHANNEL_OUT_MONO,
                 AudioFormat.ENCODING_PCM_8BIT);
 
-        AudioTrack mAudioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, SAMPLE_RATE,
+        AudioTrack mAudioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, 44100,
                 AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT,
-                mBufferSize, AudioTrack.MODE_STATIC);
+                mBufferSize, AudioTrack.MODE_STREAM);
 
 
         mAudioTrack.setStereoVolume(AudioTrack.getMaxVolume(), AudioTrack.getMaxVolume());
         mAudioTrack.play();
 
 
-        double[] sound = new double[SAMPLE_RATE];
+        double[] sound = new double[44100];
         short[] buffer;
 
         switch (sd) {
@@ -122,8 +122,8 @@ public class MainActivity extends AppCompatActivity {
         short[] buffer = new short[duration];
         Log.d(TAG, "length: " + sound.length);
 
-        for (int i = 0; i < NUM_SAMPLE; ++i) {
-            sound[i] = Math.sin((2.0*Math.PI * i/(SAMPLE_RATE/frequency)));
+        for (int i = 0; i < sound.length; ++i) {
+            sound[i] = Math.sin((2.0*Math.PI * i/(44100/frequency)));
             buffer[i + 1] = (short) (sound[i]*Short.MAX_VALUE);
             buffer[i] = 0;
         }
@@ -145,7 +145,7 @@ public class MainActivity extends AppCompatActivity {
         Log.d(TAG, "length: " + sound.length);
 
         for (int i = 0; i < sound.length; i += 2) {
-            sound[i] = Math.sin((2.0*Math.PI * i/(SAMPLE_RATE/frequency)));
+            sound[i] = Math.sin((2.0*Math.PI * i/(44100/frequency)));
             buffer[i + 1] = 0;
             buffer[i] = (short) (sound[i]*Short.MAX_VALUE);
         }
