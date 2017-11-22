@@ -120,7 +120,6 @@ public class MainActivity extends AppCompatActivity {
 
 
         short[] buffer = new short[duration];
-        Log.d(TAG, "length: " + sound.length);
 
         for (int i = 0; i < sound.length; ++i) {
             sound[i] = Math.sin((2.0*Math.PI * i/(44100/frequency)));
