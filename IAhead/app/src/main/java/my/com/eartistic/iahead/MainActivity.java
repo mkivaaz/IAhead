@@ -7,7 +7,6 @@ import android.media.AudioTrack;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -28,10 +27,10 @@ public class MainActivity extends AppCompatActivity {
 
     private EditText mETFrequency;
 
-    private final static int AUDIO_DURATION = 10;
+    private final static int AUDIO_DURATION = 250;
     private final static int SAMPLE_RATE = 44100;
-    private final static int NUM_SAMPLE = SAMPLE_RATE * AUDIO_DURATION;
-    private final static double SAMPLE[] = new double[NUM_SAMPLE];
+
+    AudioTrack mAudioTrack;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,6 +39,15 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        // AudioTrack definition
+        int mBufferSize = AudioTrack.getMinBufferSize(SAMPLE_RATE,
+                AudioFormat.CHANNEL_OUT_MONO,
+                AudioFormat.ENCODING_PCM_8BIT);
+
+        mAudioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, SAMPLE_RATE,
+                AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT,
+                mBufferSize, AudioTrack.MODE_STREAM);
+
         mETFrequency = (EditText) findViewById(R.id.et_frequency);
 
 
@@ -47,7 +55,8 @@ public class MainActivity extends AppCompatActivity {
         mIBLeft.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                playSound(SoundDirection.SD_LEFT, getFrequency(), AUDIO_DURATION);
+
+                playSound(SoundDirection.SD_LEFT, getFrequency(), AUDIO_DURATION, mAudioTrack);
             }
         });
 
@@ -55,7 +64,8 @@ public class MainActivity extends AppCompatActivity {
         mIBRight.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                playSound(SoundDirection.SD_RIGHT, getFrequency(), AUDIO_DURATION);
+
+                playSound(SoundDirection.SD_RIGHT, getFrequency(), AUDIO_DURATION, mAudioTrack);
             }
         });
 
@@ -75,80 +85,60 @@ public class MainActivity extends AppCompatActivity {
         return Double.parseDouble(freq);
     }
 
-    private void playSound(SoundDirection sd, double frequency, int duration) {
-        // AudioTrack definition
-        int mBufferSize = AudioTrack.getMinBufferSize(44100,
-                AudioFormat.CHANNEL_OUT_MONO,
-                AudioFormat.ENCODING_PCM_8BIT);
+    private void playSound(SoundDirection sd, double frequency, int duration, AudioTrack mAudioTrack) {
 
-        AudioTrack mAudioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, 44100,
-                AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT,
-                mBufferSize, AudioTrack.MODE_STREAM);
-
-
-        mAudioTrack.setStereoVolume(AudioTrack.getMaxVolume(), AudioTrack.getMaxVolume());
-        mAudioTrack.play();
-
-
-        double[] sound = new double[44100];
         short[] buffer;
 
         switch (sd) {
             case SD_LEFT:
-                buffer = generateLeftSineWave(sound, frequency, duration);
+                mAudioTrack.setStereoVolume(AudioTrack.getMaxVolume(), 0.0f);
+                buffer = generateLeftSineWave(frequency, duration);
                 break;
             case SD_RIGHT:
-                buffer = generateRightSineWave(sound, frequency, duration);
+                mAudioTrack.setStereoVolume(0.0f, AudioTrack.getMaxVolume());
+                buffer = generateRightSineWave(frequency, duration);
                 break;
             default:
                 buffer = new short[duration];
         }
 
-        mAudioTrack.write(buffer, 0, sound.length);
-        mAudioTrack.stop();
-        mAudioTrack.release();
+        mAudioTrack.write(buffer, 0, buffer.length);
+        mAudioTrack.play();
     }
 
     /***
      *
-     * @param sound
      * @param frequency
      * @param duration
      * @return
      */
-    private short[] generateLeftSineWave(double[] sound, double frequency, int duration) {
-
+    private short[] generateLeftSineWave( double frequency, int duration) {
 
         short[] buffer = new short[duration];
 
-        for (int i = 0; i < sound.length; ++i) {
-            sound[i] = Math.sin((2.0*Math.PI * i/(44100/frequency)));
-            buffer[i + 1] = (short) (sound[i]*Short.MAX_VALUE);
-            buffer[i] = 0;
+        for (int i = 0; i < buffer.length; i += 2) {
+            double sample = Math.sin((2.0*Math.PI * i/(SAMPLE_RATE/frequency)));
+            buffer[i] = (short) (sample*Short.MAX_VALUE);
         }
-
-
         return buffer;
     }
 
     /***
      *
-     * @param sound
      * @param frequency
      * @param duration
      * @return
      */
-    private short[] generateRightSineWave(double[] sound, double frequency, int duration) {
+    private short[] generateRightSineWave( double frequency, int duration) {
 
         short[] buffer = new short[duration];
-        Log.d(TAG, "length: " + sound.length);
 
-        for (int i = 0; i < sound.length; i += 2) {
-            sound[i] = Math.sin((2.0*Math.PI * i/(44100/frequency)));
-            buffer[i + 1] = 0;
-            buffer[i] = (short) (sound[i]*Short.MAX_VALUE);
+        for (int i = 0; i < buffer.length; i += 2) {
+            double sample = Math.sin((2.0*Math.PI * i/(SAMPLE_RATE/frequency)));
+            buffer[i] = (short) (sample*Short.MAX_VALUE);
         }
 
         return buffer;
     }
+
 }
